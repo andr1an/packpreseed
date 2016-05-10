@@ -4,7 +4,7 @@
 # (basically for fast kvm-qemu virtual machine installation)
 #
 # WARNING! Generated ISO will ERASE ALL your virtual HDD; grub bootloader will
-#          be installed on /dev/vda (fails if yuor first HDD path differs)
+#          be installed on /dev/vda (fails if your first HDD path differs)
 #
 # Usage:
 #   sudo ./packpreseed.sh debian-8.4.0-amd64-netinst.iso mypreseed.iso
@@ -37,6 +37,7 @@ mkdir "$working_dir" || errexit 1 "Can't create temp directory: ${working_dir}!"
 cp -v "$PRESEED_FILE" "${working_dir}/preseed.cfg"
 cp -v "$LATECMD_SCRIPT" "${working_dir}/latecmd.sh"
 
+# Working
 echo 'Extracting ISO...'
 mkdir "${working_dir}/disk_orig" "${working_dir}/disk_modified"
 mount -o ro,loop "$DEBIAN_IMAGE" "${working_dir}/disk_orig"
