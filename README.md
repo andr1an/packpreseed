@@ -11,7 +11,8 @@ differs); see `d-i grub-installer*` in `preseed.cfg`.
 
 ## Requirements
 
- - `genisoimage` tool
+ - `genisoimage` utility
+ - `rsync` utility
  - `loopfs` kernel module
 
 ## Usage

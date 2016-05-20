@@ -10,7 +10,7 @@
 #   sudo ./packpreseed.sh debian-8.4.0-amd64-netinst.iso mypreseed.iso
 
 DEBIAN_IMAGE="${1:-/var/lib/libvirt/images/debian-8.4.0-amd64-netinst.iso}"
-ISO_OUT="${2:-/var/lib/libvirt/images/test.iso}"
+ISO_OUT="${2:-/var/lib/libvirt/images/deb8preseed.iso}"
 
 PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
@@ -28,6 +28,7 @@ errexit() {
 [[ ! -f "$LATECMD_SCRIPT" ]] && errexit 3 "Can't find latecmd file: ${LATECMD_SCRIPT}!"
 
 which genisoimage &>/dev/null || errexit 4 "Can't locate genisoimage!"
+which rsync &>/dev/null || errexit 4 "Can't locate rsync!"
 lsmod | grep -q '^loop\b' || errexit 4 "Can't locate loopfs kernel module! Try: modprobe loop"
 
 # Making preparations
