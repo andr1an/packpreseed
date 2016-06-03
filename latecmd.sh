@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PUPPETLABS_DEB='puppetlabs-release-jessie.deb'
+
 ######
 ### SSH server config
 
@@ -17,20 +19,27 @@ grep '^UseDNS' /etc/ssh/sshd_config \
 
 ######
 ### Puppet 3 installation
-cd /tmp
 
-export DEBIAN_FRONTEND=noninteractive
+install_puppet() {
+  cd /tmp
+  if timeout 1m wget "http://apt.puppetlabs.com/${PUPPETLABS_DEB}"; then
+    dpkg -i "$PUPPETLABS_DEB" || return 1
+    rm -f "$PUPPETLABS_DEB"
+  else
+    return 1
+  fi
 
-timeout 1m wget "http://apt.puppetlabs.com/puppetlabs-release-jessie.deb" \
-  && { dpkg -i puppetlabs-release-jessie.deb; rm puppetlabs-release-jessie.deb; }\
-  || touch /root/puppet_failed
+  export DEBIAN_FRONTEND=noninteractive
 
-sed -i 's/^deb cdrom.*/#&/' /etc/apt/sources.list
+  sed -i 's/^deb cdrom.*/#&/' /etc/apt/sources.list
 
-timeout 1m apt-get update || exit 0
-
-if [[ ! -f /root/puppet_failed ]]; then
-  timeout 4m apt-get -y --force-yes install puppet \
-    || { touch /root/puppet_failed; exit 0; }
+  timeout 1m apt-get update || return 1
+  timeout 4m apt-get -y --force-yes install puppet || return 1
   apt-get clean
-fi
+
+  return 0
+}
+
+install_puppet || touch /root/puppet_failed
+
+exit 0

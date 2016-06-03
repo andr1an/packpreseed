@@ -4,16 +4,17 @@
 # (basically for fast kvm-qemu virtual machine installation)
 #
 # WARNING! Generated ISO will ERASE ALL your virtual HDD; grub bootloader will
-#          be installed on /dev/vda (fails if your first HDD path differs)
+#          be installed on /dev/vda (fails if your first HDD path differs).
+#          To change this default behaviour, edit preseed.cfg d-i partman* sections. 
 #
 # Usage:
 #   sudo ./packpreseed.sh debian-8.4.0-amd64-netinst.iso mypreseed.iso
 
-DEBIAN_IMAGE="${1:-/var/lib/libvirt/images/debian-8.4.0-amd64-netinst.iso}"
-ISO_OUT="${2:-/var/lib/libvirt/images/deb8preseed.iso}"
-
 PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
+
+debian_image="${1:-/var/lib/libvirt/images/debian-8.4.0-amd64-netinst.iso}"
+iso_out="${2:-/var/lib/libvirt/images/deb8preseed.iso}"
 
 errexit() {
   echo >&2 "$2"
@@ -23,9 +24,9 @@ errexit() {
 # Checks
 [[ $UID -ne 0 ]] && errexit 2 "Must be run as root!"
 
-[[ ! -f "$DEBIAN_IMAGE" ]] && errexit 3 "Can't find image file: ${DEBIAN_IMAGE}!"
 [[ ! -f "$PRESEED_FILE" ]] && errexit 3 "Can't find preseed file: ${PRESEED_FILE}!"
 [[ ! -f "$LATECMD_SCRIPT" ]] && errexit 3 "Can't find latecmd file: ${LATECMD_SCRIPT}!"
+[[ ! -f "$debian_image" ]] && errexit 3 "Can't find image file: ${debian_image}!"
 
 which genisoimage &>/dev/null || errexit 4 "Can't locate genisoimage!"
 which rsync &>/dev/null || errexit 4 "Can't locate rsync!"
@@ -41,7 +42,7 @@ cp -v "$LATECMD_SCRIPT" "${working_dir}/latecmd.sh"
 # Working
 echo 'Extracting ISO...'
 mkdir "${working_dir}/disk_orig" "${working_dir}/disk_modified"
-mount -o ro,loop "$DEBIAN_IMAGE" "${working_dir}/disk_orig"
+mount -o ro,loop "$debian_image" "${working_dir}/disk_orig"
 pushd "$working_dir" # script working directory in stack
 rsync -aH --exclude=TRANS.TBL disk_orig/ disk_modified
 umount disk_orig
@@ -71,12 +72,12 @@ md5sum $(find -follow -type f ! -path './md5sum.txt') > md5sum.txt
 
 popd # back to script working direcotry
 
-genisoimage -o "$ISO_OUT" -r -J -no-emul-boot -boot-load-size 4 \
+genisoimage -o "$iso_out" -r -J -no-emul-boot -boot-load-size 4 \
   -boot-info-table -b isolinux/isolinux.bin -c isolinux/boot.cat \
   "${working_dir}/disk_modified"
 
-echo "Custom ISO created: ${ISO_OUT}!"
-chown qemu:qemu "$ISO_OUT" 2>/dev/null || true
+echo "Custom ISO created: ${iso_out}!"
+chown qemu:qemu "$iso_out" 2>/dev/null || true
 
 # Cleanup
 rm -rf "$working_dir"
