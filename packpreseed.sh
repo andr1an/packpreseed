@@ -5,7 +5,7 @@
 #
 # WARNING! Generated ISO will ERASE ALL your virtual HDD; grub bootloader will
 #          be installed on /dev/vda (fails if your first HDD path differs).
-#          To change this default behavior, edit preseed.cfg d-i partman* sections. 
+#          To change this default behavior, edit preseed.cfg d-i partman* sections.
 #
 # Usage:
 #   sudo ./packpreseed.sh debian-8.4.0-amd64-netinst.iso mypreseed.iso
