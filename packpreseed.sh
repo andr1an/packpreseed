@@ -4,11 +4,18 @@
 # (basically for fast kvm-qemu virtual machine installation)
 #
 # WARNING! Generated ISO will ERASE ALL your virtual HDD; grub bootloader will
-#          be installed on /dev/vda (fails if your first HDD path differs).
-#          To change this default behavior, edit preseed.cfg d-i partman* sections.
+#   be installed on /dev/vda (fails if your first HDD path differs).
+#   To change this default behavior, edit preseed.cfg d-i partman* sections.
 #
 # Usage:
 #   sudo ./packpreseed.sh debian-8.4.0-amd64-netinst.iso mypreseed.iso
+#
+# Author:
+#   Sergey Andrianov <info@andrian.ninja>
+#
+# URL:
+#   https://github.com/andr1an/packpreseed.git
+#
 
 PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
@@ -19,6 +26,10 @@ iso_out="${2:-/var/lib/libvirt/images/debian-latest-preseed.iso}"
 errexit() {
   echo >&2 "$2"
   exit $1
+}
+
+cleanup() {
+  [[ -d "$working_dir" ]] && rm -rf "$working_dir"
 }
 
 # Checks
@@ -34,6 +45,7 @@ lsmod | grep -q '^loop\b' || errexit 4 "Can't locate loopfs kernel module! Try: 
 
 # Making preparations
 working_dir=$(mktemp -d -t packpreseed.XXXXXXXXXX)
+trap cleanup EXIT
 
 [[ ! -d "$working_dir" ]] || errexit 1 "Can't create temp directory: ${working_dir}!"
 cp -v "$PRESEED_FILE" "${working_dir}/preseed.cfg"
@@ -80,8 +92,5 @@ echo -e "Custom ISO created:
   ${iso_out}"
 
 chown qemu:qemu "$iso_out" 2>/dev/null || true
-
-# Cleanup
-rm -rf "$working_dir"
 
 echo 'Done!'

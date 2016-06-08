@@ -22,12 +22,9 @@ grep '^UseDNS' /etc/ssh/sshd_config \
 
 install_puppet() {
   cd /tmp
-  if timeout 1m wget "http://apt.puppetlabs.com/${PUPPETLABS_DEB}"; then
-    dpkg -i "$PUPPETLABS_DEB" || return 1
-    rm -f "$PUPPETLABS_DEB"
-  else
-    return 1
-  fi
+  timeout 1m wget "http://apt.puppetlabs.com/${PUPPETLABS_DEB}" || return 1
+  dpkg -i "$PUPPETLABS_DEB" || return 1
+  rm -f "$PUPPETLABS_DEB"
 
   export DEBIAN_FRONTEND=noninteractive
 
