@@ -47,7 +47,7 @@ lsmod | grep -q '^loop\b' || errexit 4 "Can't locate loopfs kernel module! Try: 
 working_dir=$(mktemp -d -t packpreseed.XXXXXXXXXX)
 trap cleanup EXIT
 
-[[ ! -d "$working_dir" ]] || errexit 1 "Can't create temp directory: ${working_dir}!"
+[[ -d "$working_dir" ]] || errexit 1 "Can't create temp directory: ${working_dir}!"
 cp -v "$PRESEED_FILE" "${working_dir}/preseed.cfg"
 cp -v "$LATECMD_SCRIPT" "${working_dir}/latecmd.sh"
 
