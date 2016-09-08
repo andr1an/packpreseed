@@ -1,14 +1,11 @@
 #!/bin/bash
 #
 # Creates Debian 8 ISO with preseed.cfg and latecmd.sh script
-# (basically for fast kvm-qemu virtual machine installation)
+# (useful for fast KVM virtual machine installation).
 #
-# WARNING! Generated ISO will ERASE ALL your virtual HDD; grub bootloader will
-#   be installed on /dev/vda (fails if your first HDD path differs).
-#   To change this default behavior, edit preseed.cfg d-i partman* sections.
-#
-# Usage:
-#   sudo ./packpreseed.sh debian-8.4.0-amd64-netinst.iso mypreseed.iso
+# WARNING! Generated ISO will ERASE all your virtual HDD!
+#   Grub bootloader will be installed on /dev/vda (fails if your first HDD path
+#   differs). To change this default behavior, edit  d-i partman* sections in preseed.cfg.
 #
 # Author:
 #   Sergey Andrianov <info@andrian.ninja>
@@ -17,27 +14,74 @@
 #   https://github.com/andr1an/packpreseed.git
 #
 
+# Needed files
 PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
 
-debian_image="${1:-/var/lib/libvirt/images/debian-8.5.0-amd64-netinst.iso}"
-iso_out="${2:-/var/lib/libvirt/images/debian-latest-preseed.iso}"
+# Default settings
+debian_image="/var/lib/libvirt/images/debian-8.5.0-amd64-netinst.iso"
+iso_out="/var/lib/libvirt/images/debian-latest-preseed.iso"
+preseed_hostname="andrian-debian"
+
+print_usage() {
+  cat <<-USAGE
+Usage:
+  $(basename $0) [-i image] [-o out] [-n name] [-h]
+Options:
+  -i  source Debian ISO image file
+  -o  where to save preseeded ISO
+  -n  hostname to use in preseed file
+  -h  print this help end exit
+USAGE
+}
 
 errexit() {
-  echo >&2 "$2"
-  exit $1
+  local exit_code=$1
+  shift
+  echo "$@" >&2
+  exit $exit_code
 }
+
+while getopts ":i:o:n:h" opt; do
+  case "$opt" in
+    i)
+      debian_image="$OPTARG"
+      ;;
+    o)
+      iso_out="$OPTARG"
+      ;;
+    n)
+      preseed_hostname="$OPTARG"
+      ;;
+    h)
+      print_usage
+      exit
+      ;;
+    :)
+      errexit 1 "Option -$OPTARG requires an argument."
+      ;;
+    \?)
+      print_usage
+      echo
+      errexit 1 "Invalid option: -$OPTARG"
+      ;;
+  esac
+done
 
 cleanup() {
   [[ -d "$working_dir" ]] && rm -rf "$working_dir"
 }
 
 # Checks
-[[ $UID -ne 0 ]] && errexit 2 "Must be run as root!"
-
 [[ ! -f "$PRESEED_FILE" ]] && errexit 3 "Can't find preseed file: ${PRESEED_FILE}!"
 [[ ! -f "$LATECMD_SCRIPT" ]] && errexit 3 "Can't find latecmd file: ${LATECMD_SCRIPT}!"
+
+[[ $UID -ne 0 ]] && errexit 2 "Must be run as root!"
+
 [[ ! -f "$debian_image" ]] && errexit 3 "Can't find image file: ${debian_image}!"
+[[ -w "$iso_out" ]] || touch "$iso_out" 2>/dev/null \
+  || errexit 3 "Can't create or overwrite target ISO: ${iso_out}!"
+
 
 which genisoimage &>/dev/null || errexit 4 "Can't locate genisoimage!"
 which rsync &>/dev/null || errexit 4 "Can't locate rsync!"
@@ -48,8 +92,9 @@ working_dir=$(mktemp -d -t packpreseed.XXXXXXXXXX)
 trap cleanup EXIT
 
 [[ -d "$working_dir" ]] || errexit 1 "Can't create temp directory: ${working_dir}!"
-cp -v "$PRESEED_FILE" "${working_dir}/preseed.cfg"
-cp -v "$LATECMD_SCRIPT" "${working_dir}/latecmd.sh"
+sed -r '/^d-i netcfg\/(|get_)hostname/s# string.*$# string '"$preseed_hostname"'#' \
+  "$PRESEED_FILE" > "${working_dir}/preseed.cfg"
+cp "$LATECMD_SCRIPT" "${working_dir}/latecmd.sh"
 
 # Working
 echo 'Extracting ISO...'
@@ -88,7 +133,7 @@ genisoimage -o "$iso_out" -r -J -no-emul-boot -boot-load-size 4 \
   -boot-info-table -b isolinux/isolinux.bin -c isolinux/boot.cat \
   "${working_dir}/disk_modified"
 
-echo -e "Custom ISO created:
+echo -e "Custom ISO for host '$preseed_hostname' created:
   ${iso_out}"
 
 chown qemu:qemu "$iso_out" 2>/dev/null || true
