@@ -19,18 +19,20 @@ PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
 
 # Default settings
-debian_image="/var/lib/libvirt/images/debian-8.5.0-amd64-netinst.iso"
+debian_image="/var/lib/libvirt/images/debian-8.6.0-amd64-netinst.iso"
 iso_out="/var/lib/libvirt/images/debian-latest-preseed.iso"
 preseed_hostname="andrian-debian"
+preseed_username="andrian"
 
 print_usage() {
   cat <<-USAGE
 Usage:
-  $(basename $0) [-i image] [-o out] [-n name] [-h]
+  $(basename $0) [-i image] [-o out] [-n name] [-u user] [-h]
 Options:
   -i  source Debian ISO image file
   -o  where to save preseeded ISO
   -n  hostname to use in preseed file
+  -u  username to use in preseed file
   -h  print this help end exit
 USAGE
 }
@@ -42,7 +44,7 @@ errexit() {
   exit $exit_code
 }
 
-while getopts ":i:o:n:h" opt; do
+while getopts ":i:o:n:u:h" opt; do
   case "$opt" in
     i)
       debian_image="$OPTARG"
@@ -52,6 +54,9 @@ while getopts ":i:o:n:h" opt; do
       ;;
     n)
       preseed_hostname="$OPTARG"
+      ;;
+    u)
+      preseed_username="$OPTARG"
       ;;
     h)
       print_usage
@@ -92,7 +97,8 @@ working_dir=$(mktemp -d -t packpreseed.XXXXXXXXXX)
 trap cleanup EXIT
 
 [[ -d "$working_dir" ]] || errexit 1 "Can't create temp directory: ${working_dir}!"
-sed -r '/^d-i netcfg\/(|get_)hostname/s# string.*$# string '"$preseed_hostname"'#' \
+sed -r -e '/^d-i netcfg\/(|get_)hostname/s# string.*$# string '"$preseed_hostname"'#' \
+  -e '/^d-i passwd\/username/s# string.*$# string '"$preseed_username"'#' \
   "$PRESEED_FILE" > "${working_dir}/preseed.cfg"
 cp "$LATECMD_SCRIPT" "${working_dir}/latecmd.sh"
 
