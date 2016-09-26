@@ -23,16 +23,18 @@ debian_image="/var/lib/libvirt/images/debian-8.6.0-amd64-netinst.iso"
 iso_out="/var/lib/libvirt/images/debian-latest-preseed.iso"
 preseed_hostname="andrian-debian"
 preseed_username="andrian"
+grub_timeout=10
 
 print_usage() {
   cat <<-USAGE
 Usage:
-  $(basename $0) [-i image] [-o out] [-n name] [-u user] [-h]
+  $(basename $0) [-i image] [-o out] [-n name] [-u user] [-t timeout] [-h]
 Options:
   -i  source Debian ISO image file
   -o  where to save preseeded ISO
   -n  hostname to use in preseed file
   -u  username to use in preseed file
+  -t  timeout for CD boot loaders, seconds
   -h  print this help end exit
 USAGE
 }
@@ -44,7 +46,7 @@ errexit() {
   exit $exit_code
 }
 
-while getopts ":i:o:n:u:h" opt; do
+while getopts ":i:o:n:u:t:h" opt; do
   case "$opt" in
     i)
       debian_image="$OPTARG"
@@ -57,6 +59,9 @@ while getopts ":i:o:n:u:h" opt; do
       ;;
     u)
       preseed_username="$OPTARG"
+      ;;
+    t)
+      grub_timeout="$OPTARG"
       ;;
     h)
       print_usage
@@ -86,7 +91,7 @@ cleanup() {
 [[ ! -f "$debian_image" ]] && errexit 3 "Can't find image file: ${debian_image}!"
 [[ -w "$iso_out" ]] || touch "$iso_out" 2>/dev/null \
   || errexit 3 "Can't create or overwrite target ISO: ${iso_out}!"
-
+[[ "$grub_timeout" =~ ^[0-9]+$ ]] || errexit 3 "Invalid boot loader timeout: ${grub_timeout}!"
 
 which genisoimage &>/dev/null || errexit 4 "Can't locate genisoimage!"
 which rsync &>/dev/null || errexit 4 "Can't locate rsync!"
@@ -129,6 +134,14 @@ cd ../disk_modified
 
 echo "Copying latecmd scipt..."
 cp -f ../latecmd.sh ./
+
+echo "Setting boot loader timeout..."
+isolinux_timeout=$(( $grub_timeout * 10 ))
+chmod 644 boot/grub/grub.cfg isolinux/isolinux.cfg isolinux/prompt.cfg
+sed -i "/^set theme=/a set timeout=$grub_timeout" boot/grub/grub.cfg
+sed -i "s/timeout 0$/timeout $isolinux_timeout/" isolinux/isolinux.cfg
+sed -i "s/timeout 0$/timeout $isolinux_timeout/" isolinux/prompt.cfg
+chmod 444 boot/grub/grub.cfg isolinux/isolinux.cfg isolinux/prompt.cfg
 
 echo 'Generating new ISO image...'
 md5sum $(find -follow -type f ! -path './md5sum.txt') > md5sum.txt
