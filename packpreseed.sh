@@ -5,7 +5,7 @@
 #
 # WARNING! Generated ISO will ERASE all your virtual HDD!
 #   Grub bootloader will be installed on /dev/vda (fails if your first HDD path
-#   differs). To change this default behavior, edit  d-i partman* sections in preseed.cfg.
+#   differs). To change this default behavior, edit d-i partman* sections in preseed.cfg.
 #
 # Author:
 #   Sergey Andrianov <info@andrian.ninja>
@@ -19,7 +19,7 @@ PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
 
 # Default settings
-debian_image="/var/lib/libvirt/images/debian-8.6.0-amd64-netinst.iso"
+debian_image="/var/lib/libvirt/images/debian-8.7.0-amd64-netinst.iso"
 iso_out="/var/lib/libvirt/images/debian-latest-preseed.iso"
 preseed_hostname="andrian-debian"
 preseed_username="andrian"
