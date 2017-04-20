@@ -19,7 +19,7 @@ PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
 
 # Default settings
-debian_image="/var/lib/libvirt/images/debian-8.7.0-amd64-netinst.iso"
+debian_image="/var/lib/libvirt/images/debian-8.7.1-amd64-netinst.iso"
 iso_out="/var/lib/libvirt/images/debian-latest-preseed.iso"
 preseed_hostname="andrian-debian"
 preseed_username="andrian"
@@ -95,7 +95,9 @@ cleanup() {
 
 which genisoimage &>/dev/null || errexit 4 "Can't locate genisoimage!"
 which rsync &>/dev/null || errexit 4 "Can't locate rsync!"
-lsmod | grep -q '^loop\b' || errexit 4 "Can't locate loopfs kernel module! Try: modprobe loop"
+if ! lsmod | grep -qw loop; then
+  modprobe loop || errexit 4 "Can't locate loopfs kernel module; 'modprobe loop' failed!"
+fi
 
 # Making preparations
 working_dir=$(mktemp -d -t packpreseed.XXXXXXXXXX)
