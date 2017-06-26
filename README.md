@@ -17,7 +17,19 @@ differs); see `d-i grub-installer*` in `preseed.cfg`.
 
 ## Usage
 
-    sudo ./packpreseed.sh debian-8.4.0-amd64-netinst.iso mypreseed.iso
+    packpreseed.sh [-i image] [-o out] [-n name] [-u user] [-t timeout] [-h]
+
+    Options:
+      -i  source Debian ISO image file
+      -o  where to save preseeded ISO
+      -n  hostname to use in preseed file
+      -u  username to use in preseed file
+      -t  timeout for CD boot loaders, seconds
+      -h  print this help end exit
+
+Example:
+
+    sudo ./packpreseed.sh -i debian-8.8.0-amd64-netinst.iso -o mypreseed.iso
 
 ## License
 
