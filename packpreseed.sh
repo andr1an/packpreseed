@@ -19,7 +19,7 @@ PRESEED_FILE=preseed.cfg
 LATECMD_SCRIPT=latecmd.sh
 
 # Default settings
-debian_image="/var/lib/libvirt/images/debian-8.7.1-amd64-netinst.iso"
+debian_image="/var/lib/libvirt/images/debian-8.8.0-amd64-netinst.iso"
 iso_out="/var/lib/libvirt/images/debian-latest-preseed.iso"
 preseed_hostname="andrian-debian"
 preseed_username="andrian"
